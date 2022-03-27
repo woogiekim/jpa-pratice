@@ -22,10 +22,14 @@ class MemberTest {
     void setUp() {
         em = emf.createEntityManager();
         tx = em.getTransaction();
+
+        tx.begin();
     }
 
     @AfterEach
     void tearDown() {
+        tx.rollback();
+
         em.close();
     }
 
@@ -36,89 +40,82 @@ class MemberTest {
 
     @Test
     void 멤버등록() {
-        try {
-            tx.begin();
+        //given
+        final Member member = new Member();
+        member.setId("wook");
+        member.setUsername("태욱");
+        member.setAge(36);
 
-            //given
-            final Member member = new Member();
-            member.setId("wook");
-            member.setUsername("태욱");
-            member.setAge(36);
+        //when
+        em.persist(member);
 
-            //when
-            em.persist(member);
+        em.flush();
+        em.clear();
 
-            //then
-            Member findMember = em.find(Member.class, "wook");
-            assertThat(findMember.getId()).isNotNull();
-            assertThat(findMember.getUsername()).isEqualTo("태욱");
-            assertThat(findMember.getAge()).isEqualTo(36);
-
-            em.remove(member);
-
-            tx.commit();
-        } catch (Exception e) {
-            tx.rollback();
-        }
+        //then
+        Member findMember = em.find(Member.class, "wook");
+        assertThat(findMember.getId()).isNotNull();
+        assertThat(findMember.getUsername()).isEqualTo("태욱");
+        assertThat(findMember.getAge()).isEqualTo(36);
     }
 
     @Test
     void 멤버수정() {
-        try {
-            tx.begin();
+        //given
+        final Member member = new Member();
+        member.setId("wook");
+        member.setUsername("태욱");
+        member.setAge(36);
 
-            //given
-            final Member member = new Member();
-            member.setId("wook");
-            member.setUsername("태욱");
-            member.setAge(36);
+        em.persist(member);
 
-            em.persist(member);
+        Member findMember1 = em.find(Member.class, "wook");
+        assertThat(findMember1.getAge()).isEqualTo(36);
 
-            Member findMember1 = em.find(Member.class, "wook");
-            assertThat(findMember1.getAge()).isEqualTo(36);
+        //when
+        member.setAge(20);
 
-            //when
-            member.setAge(20);
-
-            //then
-            Member findMember2 = em.find(Member.class, "wook");
-            assertThat(findMember2.getAge()).isEqualTo(20);
-
-            em.remove(member);
-
-            tx.commit();
-        } catch (Exception e) {
-            tx.rollback();
-        }
+        //then
+        Member findMember2 = em.find(Member.class, "wook");
+        assertThat(findMember2.getAge()).isEqualTo(20);
     }
 
     @Test
     void 멤버삭제() {
-        try {
-            tx.begin();
+        //given
+        final Member member = new Member();
+        member.setId("wook");
+        member.setUsername("태욱");
+        member.setAge(36);
 
-            //given
-            final Member member = new Member();
-            member.setId("wook");
-            member.setUsername("태욱");
-            member.setAge(36);
+        em.persist(member);
 
-            em.persist(member);
+        em.flush();
+        em.clear();
 
-            Member findMember1 = em.find(Member.class, "wook");
-            assertThat(findMember1).isNotNull();
+        Member findMember1 = em.find(Member.class, "wook");
+        assertThat(findMember1).isNotNull();
 
-            //when
-            em.remove(member);
+        //when
+        em.remove(findMember1);
 
-            //then
-            Member findMember2 = em.find(Member.class, "wook");
-            assertThat(findMember2).isNull();
+        //then
+        Member findMember2 = em.find(Member.class, "wook");
+        assertThat(findMember2).isNull();
+    }
 
-            tx.commit();
-        } catch (Exception e) {
-            tx.rollback();
-        }
+    @Test
+    void 준영속_상태() {
+        Member member = new Member();
+        member.setId("woogie");
+        member.setUsername("김태욱");
+        member.setAge(36);
+
+        em.persist(member);
+
+        em.detach(member);
+
+        em.find(Member.class, "woogie");
+        em.find(Member.class, "woogie");
     }
 }
